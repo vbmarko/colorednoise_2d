@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jan 27 18:59:48 2022
+
+@author: marko
+"""
+
+from mpl_toolkits.mplot3d import Axes3D
+from PIL import Image, ImageOps
+import  matplotlib.pyplot as plt
+import numpy as np
+from numpy.fft import fft2, ifft2, fftshift, ifftshift, fftfreq
+
+
+def gen_mask(noise):
+    # mask = np.zeros(noise.shape).astype(np.float128)
+    rfreqs = np.fft.fftfreq(noise.shape[0],d=2)
+    cfreqs = np.fft.fftfreq(noise.shape[1],d=2)
+    rm = (np.tile(rfreqs,(len(cfreqs),1)))**2
+    rc = (np.tile(np.atleast_2d(cfreqs).T,(1,len(rfreqs))))**2
+    mask = rm+rc
+    mask[0][0] = 10**-6
+    mask = 1/np.sqrt(mask)
+    return mask 
+
+
+
+
+def colornoise(shape=(256,256),a=1,noisesample=0,mask=0):
+    if type(noisesample) == np.ndarray:
+        noise = noisesample.astype(np.float64)
+    else:
+        noise = np.random.uniform(0,1,shape)
+    noise -= np.average(noise)
+    noisef = fft2(noise)
+    if type(mask) != np.ndarray:
+        mask = gen_mask(noisef)
+    filf = noisef*(mask**a)
+    anoise = abs(ifft2(filf))
+    return anoise
